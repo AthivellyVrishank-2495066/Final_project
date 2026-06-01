@@ -7,6 +7,17 @@
 #include <cmath>
 #include <iomanip>
 
+static std::string trimString(const std::string& str) {
+    size_t first = str.find_first_not_of(" \t\r\n");
+    if (first == std::string::npos) return "";
+    size_t last = str.find_last_not_of(" \t\r\n");
+    return str.substr(first, last - first + 1);
+}
+
+static bool isHeaderLine(const std::string& line, const std::string& expectedHeader) {
+    return trimString(line) == expectedHeader;
+}
+
 InventoryManager::InventoryManager(const std::string& dataDir)
     : productsFile(dataDir + "/products.csv"),
       suppliersFile(dataDir + "/suppliers.csv"),
@@ -49,7 +60,14 @@ void InventoryManager::loadAllData() {
     std::ifstream suppFile(suppliersFile.c_str());
     if (suppFile.is_open()) {
         std::string line;
+        bool firstLine = true;
         while (std::getline(suppFile, line)) {
+            if (firstLine) {
+                firstLine = false;
+                if (isHeaderLine(line, "supplierID,name,contact,leadTimeDays,reliabilityScore")) {
+                    continue;
+                }
+            }
             if (!line.empty()) {
                 Supplier* supp = new Supplier();
                 supp->loadFromCSVString(line);
@@ -66,7 +84,14 @@ void InventoryManager::loadAllData() {
     std::ifstream prodFile(productsFile.c_str());
     if (prodFile.is_open()) {
         std::string line;
+        bool firstLine = true;
         while (std::getline(prodFile, line)) {
+            if (firstLine) {
+                firstLine = false;
+                if (isHeaderLine(line, "productID,name,category,supplierID,currentStock,reorderLevel,unitPrice,expiryDate,shelfLifeDays,batchNumber,warrantyMonths,totalSold")) {
+                    continue;
+                }
+            }
             if (!line.empty()) {
                 Product* prod = NULL;
                 
@@ -103,6 +128,8 @@ void InventoryManager::loadAllData() {
         }
         prodFile.close();
         std::cout << "Loaded " << products.size() << " products.\n";
+            // Remove expired perishable products right after loading
+            removeExpiredProducts();
     } else {
         std::cout << "Note: Products file not found. Starting with empty inventory.\n";
     }
@@ -115,7 +142,14 @@ void InventoryManager::loadSalesData() {
     std::ifstream salesFile(salesLogFile.c_str());
     if (salesFile.is_open()) {
         std::string line;
+        bool firstLine = true;
         while (std::getline(salesFile, line)) {
+            if (firstLine) {
+                firstLine = false;
+                if (isHeaderLine(line, "transactionID,productID,quantity,salePrice,totalAmount,date,type")) {
+                    continue;
+                }
+            }
             if (!line.empty()) {
                 SalesTransaction trans;
                 trans.loadFromCSVString(line);
@@ -133,6 +167,7 @@ void InventoryManager::saveAllData() {
     // Save products
     std::ofstream prodFile(productsFile.c_str());
     if (prodFile.is_open()) {
+        prodFile << "productID,name,category,supplierID,currentStock,reorderLevel,unitPrice,expiryDate,shelfLifeDays,batchNumber,warrantyMonths,totalSold\n";
         for (std::map<std::string, Product*>::iterator it = products.begin();
              it != products.end(); ++it) {
             prodFile << it->second->toCSVString() << "\n";
@@ -144,6 +179,7 @@ void InventoryManager::saveAllData() {
     // Save suppliers
     std::ofstream suppFile(suppliersFile.c_str());
     if (suppFile.is_open()) {
+        suppFile << "supplierID,name,contact,leadTimeDays,reliabilityScore\n";
         for (std::map<std::string, Supplier*>::iterator it = suppliers.begin();
              it != suppliers.end(); ++it) {
             suppFile << it->second->toCSVString() << "\n";
@@ -243,6 +279,33 @@ void InventoryManager::deleteProduct(const std::string& productID) {
     }
 }
 
+void InventoryManager::removeExpiredProducts() {
+    std::vector<std::string> toRemove;
+    for (std::map<std::string, Product*>::const_iterator it = products.begin();
+         it != products.end(); ++it) {
+        PerishableProduct* pp = dynamic_cast<PerishableProduct*>(it->second);
+        if (pp != NULL) {
+            if (pp->isExpired()) {
+                toRemove.push_back(it->first);
+            }
+        }
+    }
+
+    if (toRemove.empty()) return;
+
+    for (size_t i = 0; i < toRemove.size(); ++i) {
+        std::map<std::string, Product*>::iterator it = products.find(toRemove[i]);
+        if (it != products.end()) {
+            std::cout << "Removing expired product: " << it->first << "\n";
+            delete it->second;
+            products.erase(it);
+        }
+    }
+
+    // Persist changes to products.csv after removals
+    saveAllData();
+}
+
 Product* InventoryManager::findProduct(const std::string& productID) const {
     std::map<std::string, Product*>::const_iterator it = products.find(productID);
     if (it != products.end()) {
@@ -323,8 +386,18 @@ void InventoryManager::recordSale(const std::string& productID, int quantity) {
     salesHistory.push_back(trans);
 
     // Append to transactions archive (append-only)
+    bool addHeader = false;
+    std::ifstream transCheck(transactionsFile.c_str());
+    if (!transCheck.is_open() || transCheck.peek() == std::ifstream::traits_type::eof()) {
+        addHeader = true;
+    }
+    transCheck.close();
+
     std::ofstream transOut(transactionsFile.c_str(), std::ios::out | std::ios::app);
     if (transOut.is_open()) {
+        if (addHeader) {
+            transOut << "transactionID,productID,quantity,salePrice,totalAmount,date,type\n";
+        }
         transOut << trans.toCSVString() << "\n";
         transOut.close();
     } else {
@@ -354,8 +427,18 @@ void InventoryManager::recordPurchase(const std::string& productID, int quantity
     salesHistory.push_back(trans);
 
     // Append to transactions archive (append-only)
+    bool addHeader = false;
+    std::ifstream transCheck(transactionsFile.c_str());
+    if (!transCheck.is_open() || transCheck.peek() == std::ifstream::traits_type::eof()) {
+        addHeader = true;
+    }
+    transCheck.close();
+
     std::ofstream transOut(transactionsFile.c_str(), std::ios::out | std::ios::app);
     if (transOut.is_open()) {
+        if (addHeader) {
+            transOut << "transactionID,productID,quantity,salePrice,totalAmount,date,type\n";
+        }
         transOut << trans.toCSVString() << "\n";
         transOut.close();
     } else {

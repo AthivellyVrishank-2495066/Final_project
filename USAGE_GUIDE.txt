@@ -75,7 +75,7 @@ Prompts and responses:
   Current Stock: 150
   Reorder Level: 30
   Unit Price: 350.00
-  Expiry Date (YYYY-MM-DD): 2026-12-31
+  Expiry Date (DD-MM-YYYY): 31-12-2026
   Shelf Life (days): 365
 
 ✓ Product added to inventory and saved to products.csv
@@ -110,7 +110,7 @@ Output shows detailed information:
   Unit Price: Rs. 28
   Total Sold: 1245
   Type: Perishable
-  Expiry Date: 2026-04-20
+  Expiry Date: 20-04-2026
 
 EXAMPLE 4: RECORD A SALE
 ────────────────────────
@@ -296,7 +296,7 @@ PRODUCTS.CSV - One row per product
            unitPrice, expiryDate, shelfLifeDays, batchNumber, warrantyMonths, totalSold
   
   Example row:
-    P001,Amul Milk 500ml,Grocery,SUP001,230,50,28.00,2026-04-20,7,,0,1245
+    P001,Amul Milk 500ml,Grocery,SUP001,230,50,28.00,20-04-2026,7,,0,1245
 
 SUPPLIERS.CSV - One row per supplier
   Columns: supplierID, name, contact, leadTimeDays, reliabilityScore
@@ -308,7 +308,7 @@ SALES.LOG - Append-only transaction log
   Columns: transactionID, productID, quantity, salePrice, totalAmount, date, type
   
   Example row:
-    T006,P001,15,28.00,420.00,2026-04-15,Sale
+    T006,P001,15,28.00,420.00,15-04-2026,Sale
 
 TRANSACTIONS.CSV - Historical records
   Same format as sales.log for archival purposes
@@ -379,7 +379,7 @@ TIPS & BEST PRACTICES
 ✓ PRODUCT IDs:      Use consistent format (e.g., P001, P002)
 ✓ SUPPLIER IDs:     Use consistent format (e.g., SUP001, SUP002)
 ✓ PRICES:           Enter with decimals (e.g., 28.00, not 28)
-✓ DATES:            Use YYYY-MM-DD format (e.g., 2026-04-20)
+✓ DATES:            Use DD-MM-YYYY format (e.g., 20-04-2026)
 ✓ STOCK LEVELS:     Keep reorder level at 15-20% of typical stock
 ✓ BACKUP:           Create backup weekly or after major changes
 ✓ CATEGORIES:       Keep consistent spelling for filters
@@ -403,7 +403,7 @@ Issue: "File not found" on startup
 
 Issue: "Invalid input"
 → Re-enter as prompted (numeric fields need numbers)
-→ Dates must be in YYYY-MM-DD format
+→ Dates must be in DD-MM-YYYY format
 
 Issue: Data not saved
 → Application auto-saves after each operation

@@ -154,7 +154,7 @@ void productManagementModule() {
             Product* prod = NULL;
             
             if (isPerishable == 'y' || isPerishable == 'Y') {
-                std::cout << "Expiry Date (YYYY-MM-DD): ";
+                std::cout << "Expiry Date (DD-MM-YYYY): ";
                 std::string expiryDate;
                 std::getline(std::cin, expiryDate);
                 

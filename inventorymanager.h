@@ -101,6 +101,8 @@ public:
     
     // Utility
     void clearAllData();
+    // Remove expired perishable products from inventory and disk
+    void removeExpiredProducts();
 };
 
 #endif // INVENTORYMANAGER_H

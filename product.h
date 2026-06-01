@@ -63,7 +63,7 @@ public:
 // Derived class for perishable products
 class PerishableProduct : public Product {
 private:
-    std::string expiryDate;  // Format: YYYY-MM-DD
+    std::string expiryDate;  // Format: DD-MM-YYYY
     int shelfLifeDays;
 
 public:

@@ -211,7 +211,7 @@ bool PerishableProduct::isExpired() const {
 }
 
 int PerishableProduct::daysUntilExpiry() const {
-    // Simple date comparison (YYYY-MM-DD format)
+    // Simple date comparison (DD-MM-YYYY format)
     // For production, use proper date library
     time_t now = time(0);
     struct tm* timeinfo = localtime(&now);
@@ -220,11 +220,11 @@ int PerishableProduct::daysUntilExpiry() const {
     int currentMonth = timeinfo->tm_mon + 1;
     int currentDay = timeinfo->tm_mday;
     
-    if (expiryDate.empty()) return 999;
-    
-    int expYear = atoi(expiryDate.substr(0, 4).c_str());
-    int expMonth = atoi(expiryDate.substr(5, 2).c_str());
-    int expDay = atoi(expiryDate.substr(8, 2).c_str());
+    if (expiryDate.empty() || expiryDate.size() < 10) return 999;
+
+    int expDay = atoi(expiryDate.substr(0, 2).c_str());
+    int expMonth = atoi(expiryDate.substr(3, 2).c_str());
+    int expYear = atoi(expiryDate.substr(6, 4).c_str());
     
     int daysDiff = 0;
     if (expYear > currentYear) {

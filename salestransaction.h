@@ -13,7 +13,7 @@ private:
     int quantity;
     double salePrice;        // Per unit
     double totalAmount;
-    std::string transactionDate;  // YYYY-MM-DD
+    std::string transactionDate;  // DD-MM-YYYY
     std::string transactionType;  // "Sale" or "Purchase"
     double discountApplied;  // 0.0 to 1.0
 

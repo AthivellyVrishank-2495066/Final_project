@@ -121,7 +121,7 @@ std::string SalesTransaction::getCurrentDate() {
     time_t now = time(0);
     struct tm* timeinfo = localtime(&now);
     
-    char buffer[11];  // "YYYY-MM-DD\0"
-    strftime(buffer, sizeof(buffer), "%Y-%m-%d", timeinfo);
+    char buffer[11];  // "DD-MM-YYYY\0"
+    strftime(buffer, sizeof(buffer), "%d-%m-%Y", timeinfo);
     return std::string(buffer);
 }
